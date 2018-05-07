@@ -1,55 +1,57 @@
 <script type="text/javascript">
-function getSelectedOptions(sel, fn) {
-    var opts = [], opt;
-    
-    for (var i=0, len=sel.options.length; i<len; i++) {
-        opt = sel.options[i];
-        
-        if ( opt.selected ) {
-            opts.push(opt);
-            if (fn) { fn(opt);}
-        }
-    }
-    return opts;
-}
+var translation;
+var pronounciation;
 
-function callback(opt) {
-    var display = document.getElementById('result');
-    display.innerHTML += opt.value + ', ';
+function getSelectedOptions(id) {
+    return Array.from(document.querySelectorAll('#'+id+' option:checked')).map((el) => el.value);
+}
+    
+function get_vocabulary(str) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET','get_vocabulary?groups='+str);
+    xhr.onload = function() {
+        if(xhr.readyState === 4 && xhr.status === 200) {
+            var arr = xhr.responseText.split(',');
+            document.getElementById('response').innerHTML = "<b><h1>"+arr[0]+"</h1></b>";
+            pronounciation = arr[1];
+            translation = arr[2];
+        }
+        else {
+            alert('Request failed ' + xhr.status);
+        }
+    };
+    xhr.send();
 }
     
 window.onload=function()
 {
-    document.getElementById('groups').onchange = function(e) {
-        var display = document.getElementById('result');
-        display.innerHTML = '';
-    
-        getSelectedOptions(this, callback);
-    
-        var str = display.innerHTML.slice(0, -2);
-        display.innerHTML = str;
-        
-        // AJAX CALL HERE to get vocab matching selected groups
+    document.getElementById('groups').onchange = function() {
+        get_vocabulary(getSelectedOptions('groups'));
     };
 
     document.getElementById("helpbutton").onclick = function()
     {
-        document.getElementById("text").innerText = "{{vocabulary.pronounciation}} : {{vocabulary.translation}}";
-        document.getElementById('pronounciation').focus();
+        document.getElementById("help").innerText = translation +" : "+ pronounciation
     };
     
     document.getElementById("pronounciation").oninput = function()
     {
-        if (document.getElementById("pronounciation").value == "{{vocabulary.pronounciation}}" && document.getElementById("translation").value == "{{vocabulary.translation}}")
+        if (document.getElementById("pronounciation").value == pronounciation && document.getElementById("translation").value == translation)
         {
-            window.location.reload(false);
+            document.getElementById("pronounciation").value = "";
+            document.getElementById("translation").value = "";
+            document.getElementById("help").innerHTML = "";
+            get_vocabulary(getSelectedOptions('groups'));
         }
     };
     document.getElementById("translation").oninput = function()
     {
-        if (document.getElementById("pronounciation").value == "{{vocabulary.pronounciation}}" && document.getElementById("translation").value == "{{vocabulary.translation}}")
+        if (document.getElementById("pronounciation").value == pronounciation && document.getElementById("translation").value == translation)
         {
-            window.location.reload(false);
+            document.getElementById("pronounciation").value = "";
+            document.getElementById("translation").value = "";
+            document.getElementById("help").innerHTML = "";
+            get_vocabulary(getSelectedOptions('groups'));
         }
     };
 }
@@ -61,10 +63,8 @@ window.onload=function()
         <option value="{{group.group}}">{{group.group}}</option>
     {% endfor %}
 </select>
-<h2>{{vocabulary.vocabulary}}</h2>
-<textarea id="result"></textarea>
-</br>
-</br>
+<b><h1 id="response"></h1></b>
+<p id="help"></p>
 <input type="text" name="pronounciation" id="pronounciation" placeholder="Pronounciation" autofocus/>
 </br>
 <input type="text" name="translation" placeholder="Translation" id="translation"/>
