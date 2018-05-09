@@ -1,6 +1,10 @@
+{% load static %}
+<link rel='stylesheet' type='text/css' href='{% static "jpdriller/style.css" %}'/>
+
 <script type="text/javascript">
 var translation;
 var pronounciation;
+var group;
 
 function getSelectedOptions(id) {
     return Array.from(document.querySelectorAll('#'+id+' option:checked')).map((el) => el.value);
@@ -8,65 +12,124 @@ function getSelectedOptions(id) {
     
 function get_vocabulary(str) {
     var xhr = new XMLHttpRequest();
+    var arr;
+    var prnc;
+    var trns;
+    
     xhr.open('GET','get_vocabulary?groups='+str);
     xhr.onload = function() {
         if(xhr.readyState === 4 && xhr.status === 200) {
-            var arr = xhr.responseText.split(',');
-            document.getElementById('response').innerHTML = "<b><h1>"+arr[0]+"</h1></b>";
+            arr = xhr.responseText.split(',');
+            document.getElementById('response').innerHTML = '<b><h1>'+arr[0]+'</h1></b>';
             pronounciation = arr[1];
             translation = arr[2];
+            document.getElementById('note').innerHTML = '<b><p>'+arr[3]+'</p></b>';
+            group = arr[4]
+            
+            prnc = document.getElementById('pronounciation');
+            trns = document.getElementById('translation');
+            
+            document.getElementById('helptext').innerHTML = '';
+            
+            if(pronounciation != '') {prnc.style.visibility = 'visible';}
+            else                     {prnc.style.visibility = 'hidden';}
+            if(translation != '')    {trns.style.visibility = 'visible';}
+            else                     {trns.style.visibility = 'hidden';}
+            if(pronounciation != '' || translation != '') {
+                document.getElementById('helpbutton').style.visibility = 'visible';
+            }
+            
+            if(pronounciation != '' && translation != '') {prnc.focus();} 
+            else if(pronounciation != "") {prnc.focus();} 
+            else {trns.focus();}
         }
-        else {
-            alert('Request failed ' + xhr.status);
-        }
+        else {alert('Request failed ' + xhr.status);}
     };
     xhr.send();
 }
     
 window.onload=function()
 {
+    var prnc = document.getElementById('pronounciation');
+    var trns = document.getElementById('translation');
+    var hlpt = document.getElementById('helptext');
+    var hlpb = document.getElementById('helpbutton');
+    
+    prnc.style.visibility = 'hidden';
+    trns.style.visibility = 'hidden';
+    hlpb.style.visibility = 'hidden';
+
     document.getElementById('groups').onchange = function() {
-        get_vocabulary(getSelectedOptions('groups'));
+        var groups = getSelectedOptions('groups');
+        
+        if(document.getElementById('response').innerHTML == ''  || !groups.includes(group)) {
+            if(groups != "") {get_vocabulary(groups);} 
+            else {
+                translation = '';
+                pronounciation = '';
+                document.getElementById('response').innerHTML = '';
+                document.getElementById('note').innerHTML = '';
+                hlpt.innerHTML = '';
+                prnc.style.visibility = 'hidden';
+                trns.style.visibility = 'hidden';
+                hlpb.style.visibility = 'hidden';
+            }
+        }
     };
 
-    document.getElementById("helpbutton").onclick = function()
-    {
-        document.getElementById("help").innerText = translation +" : "+ pronounciation
+    hlpb.onclick = function() {
+        hlpt.innerHTML = pronounciation +' : '+ translation;
     };
     
-    document.getElementById("pronounciation").oninput = function()
-    {
-        if (document.getElementById("pronounciation").value == pronounciation && document.getElementById("translation").value == translation)
-        {
-            document.getElementById("pronounciation").value = "";
-            document.getElementById("translation").value = "";
-            document.getElementById("help").innerHTML = "";
+    prnc.oninput = function() {
+        if (prnc.value == pronounciation && trns.value == translation) {
+            prnc.value = '';
+            trns.value = '';
+            hlpt.innerHTML = '';
             get_vocabulary(getSelectedOptions('groups'));
         }
     };
-    document.getElementById("translation").oninput = function()
-    {
-        if (document.getElementById("pronounciation").value == pronounciation && document.getElementById("translation").value == translation)
-        {
-            document.getElementById("pronounciation").value = "";
-            document.getElementById("translation").value = "";
-            document.getElementById("help").innerHTML = "";
+    
+    trns.oninput = function() {
+        if (prnc.value == pronounciation && trns.value == translation) {
+            prnc.value = '';
+            trns.value = '';
+            hlpt.innerHTML = '';
             get_vocabulary(getSelectedOptions('groups'));
         }
     };
 }
 </script>
-<b><label>Groups:</label></b>
-</br>
-<select id="groups" multiple>
-    {% for group in groups %}
-        <option value="{{group.group}}">{{group.group}}</option>
-    {% endfor %}
-</select>
-<b><h1 id="response"></h1></b>
-<p id="help"></p>
-<input type="text" name="pronounciation" id="pronounciation" placeholder="Pronounciation" autofocus/>
-</br>
-<input type="text" name="translation" placeholder="Translation" id="translation"/>
-</br>
-<input type="button" name="help" value="help" id="helpbutton">
+
+<div id="wrapper">
+
+    <div id="group-container">
+        <b><label id="grouplabel">Groups:</label></b>
+        </br>
+        <select id="groups" multiple>
+            {% for group in groups %}
+                <option value="{{group.group}}">{{group.group}}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div id="inner-container-right">
+    
+        <div id="response-container">
+            <span id="response"></span>
+            <span id="note"></span>
+            <span id="helptext"></span>
+        </div>
+
+        <div id="input-container">
+            <input type="text" id="pronounciation" name="pronounciation" placeholder="Pronounciation"/>
+            </br>
+            <input type="text" id="translation" name="translation" placeholder="Translation"/>
+            </br>
+            </br>
+            <input type="button" name="help" value="help" id="helpbutton">
+        </div>
+        
+    </div>
+    
+</div>

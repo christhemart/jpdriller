@@ -1,0 +1,61 @@
+body {
+   
+}
+
+#wrapper {
+    border-style: solid;
+    border-width: 2px;
+    width: 525px;
+    
+    height:50%;
+    height:400px;
+}
+
+#group-container {
+    float: left;
+    width: 225px;
+}
+
+#inner-container-right {
+    float: left;
+    width: 300px;
+}
+
+#response-container {
+    text-align: center;
+    font-family:Arial;
+    padding-top:20px;
+}
+
+#input-container {
+    text-align: center;
+}
+
+#grouplabel {
+    font-size: 26px;
+    font-family: Arial;
+}
+
+#groups {
+    height: 92%;
+    width: 100%;
+    outline: none;
+    font-size: 18px;
+    border: 1px solid transparent;
+    border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
+}
+
+#response {
+    font-size: 32px;
+    font-family:Arial;
+    line-height: 10px;
+}
+
+#helptext {
+    font-size: 20px;
+    font-family:Arial;
+}
+
+#groups:selected {
+  background-color: DodgerBlue;
+}
