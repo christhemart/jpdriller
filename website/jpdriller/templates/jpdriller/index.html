@@ -2,6 +2,7 @@
 <link rel='stylesheet' type='text/css' href='{% static "jpdriller/style.css" %}'/>
 
 <script type="text/javascript">
+var question;
 var translation;
 var pronounciation;
 var group;
@@ -20,11 +21,21 @@ function get_vocabulary(str) {
     xhr.onload = function() {
         if(xhr.readyState === 4 && xhr.status === 200) {
             arr = xhr.responseText.split(',');
-            document.getElementById('response').innerHTML = '<b><h1>'+arr[0]+'</h1></b>';
-            pronounciation = arr[1];
-            translation = arr[2];
-            document.getElementById('note').innerHTML = '<b><p>'+arr[3]+'</p></b>';
-            group = arr[4]
+
+            if(arr[0] == 0) {
+                question  = arr[1];
+                pronounciation = arr[2];
+                translation = arr[3];
+                document.getElementById('response').style.fontSize = 'x-large';
+            } else {
+                question  = arr[3];
+                pronounciation = '';
+                translation = arr[1];
+                document.getElementById('response').style.fontSize = 'medium';
+            }
+            document.getElementById('response').innerHTML = '<b><h1>'+question+'</h1></b>';
+            document.getElementById('note').innerHTML = '<b><p>'+arr[4]+'</p></b>';
+            group = arr[5]
             
             prnc = document.getElementById('pronounciation');
             trns = document.getElementById('translation');

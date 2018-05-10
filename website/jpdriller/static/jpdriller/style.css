@@ -1,19 +1,17 @@
-body {
-   
-}
-
 #wrapper {
     border-style: solid;
     border-width: 2px;
     width: 525px;
-    
-    height:50%;
-    height:400px;
+    height: 80%;
+    height: 400px;
+    margin: 0 auto;
 }
 
 #group-container {
     float: left;
-    width: 225px;
+    width: 222px;
+    border-right: 2px solid black;
+    padding-right: 1px;
 }
 
 #inner-container-right {
@@ -23,8 +21,8 @@ body {
 
 #response-container {
     text-align: center;
-    font-family:Arial;
-    padding-top:20px;
+    font-family: Arial;
+    padding-top: 20px;
 }
 
 #input-container {
@@ -42,20 +40,23 @@ body {
     outline: none;
     font-size: 18px;
     border: 1px solid transparent;
-    border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
+    border-top: 1px solid black;
+    margin: 0;
+    padding: 0;
+}
+
+option:hover {
+  background-color: DodgerBlue;
 }
 
 #response {
     font-size: 32px;
-    font-family:Arial;
+    flex-wrap: wrap;
+    font-family: Arial;
     line-height: 10px;
 }
 
 #helptext {
     font-size: 20px;
-    font-family:Arial;
-}
-
-#groups:selected {
-  background-color: DodgerBlue;
+    font-family: Arial;
 }
