@@ -2,9 +2,10 @@
 <link rel='stylesheet' type='text/css' href='{% static "jpdriller/style.css" %}'/>
 
 <script type="text/javascript">
+var vocab_id;
 var question;
 var translation;
-var pronounciation;
+var pronunciation;
 var group;
 
 function getSelectedOptions(id) {
@@ -22,46 +23,62 @@ function get_vocabulary(str) {
         if(xhr.readyState === 4 && xhr.status === 200) {
             arr = xhr.responseText.split(',');
 
+            vocab_id = arr[1];
+
             if(arr[0] == 0) {
-                question  = arr[1];
-                pronounciation = arr[2];
-                translation = arr[3];
+                question  = arr[2];
+                pronunciation = arr[3];
+                translation = arr[4];
                 document.getElementById('response').style.fontSize = 'x-large';
             } else {
-                question  = arr[3];
-                pronounciation = '';
-                translation = arr[1];
+                question = arr[4];
+                pronunciation = '';
+                translation = arr[2];
                 document.getElementById('response').style.fontSize = 'medium';
             }
             document.getElementById('response').innerHTML = '<b><h1>'+question+'</h1></b>';
-            document.getElementById('note').innerHTML = '<b><p>'+arr[4]+'</p></b>';
-            group = arr[5]
-            
-            prnc = document.getElementById('pronounciation');
+            document.getElementById('note').innerHTML = '<b><p>'+arr[5]+'</p></b>';
+            group = arr[6];
+            streak = arr[7];
+
+            {% if user %}
+            document.getElementById('streak').innerHTML = streak;
+            document.getElementById('stats').style.visibility = 'visible';
+            {% endif %}
+
+            prnc = document.getElementById('pronunciation');
             trns = document.getElementById('translation');
             
             document.getElementById('helptext').innerHTML = '';
             
-            if(pronounciation != '') {prnc.style.visibility = 'visible';}
+            if(pronunciation != '') {prnc.style.visibility = 'visible';}
             else                     {prnc.style.visibility = 'hidden';}
             if(translation != '')    {trns.style.visibility = 'visible';}
             else                     {trns.style.visibility = 'hidden';}
-            if(pronounciation != '' || translation != '') {
+            if(pronunciation != '' || translation != '') {
                 document.getElementById('helpbutton').style.visibility = 'visible';
             }
             
-            if(pronounciation != '' && translation != '') {prnc.focus();} 
-            else if(pronounciation != "") {prnc.focus();} 
+            if(pronunciation != '' && translation != '') {prnc.focus();}
+            else if(pronunciation != "") {prnc.focus();}
             else {trns.focus();}
         }
         else {alert('Request failed ' + xhr.status);}
     };
     xhr.send();
 }
+
+{% if user %}
+function stat_update(success, vocab_id) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET','stat_update?success='+success+'&vocabid='+vocab_id);
+    xhr.send();
+}
+{% endif %}
     
 window.onload=function()
 {
-    var prnc = document.getElementById('pronounciation');
+    var prnc = document.getElementById('pronunciation');
     var trns = document.getElementById('translation');
     var hlpt = document.getElementById('helptext');
     var hlpb = document.getElementById('helpbutton');
@@ -69,31 +86,48 @@ window.onload=function()
     prnc.style.visibility = 'hidden';
     trns.style.visibility = 'hidden';
     hlpb.style.visibility = 'hidden';
+    {% if user %}
+    var stat = document.getElementById('stats').style.visibility = 'hidden';
+    {% endif %}
 
     document.getElementById('groups').onchange = function() {
         var groups = getSelectedOptions('groups');
         
         if(document.getElementById('response').innerHTML == ''  || !groups.includes(group)) {
-            if(groups != "") {get_vocabulary(groups);} 
+            if(groups != "") {get_vocabulary(groups);}
             else {
                 translation = '';
-                pronounciation = '';
+                pronunciation = '';
                 document.getElementById('response').innerHTML = '';
                 document.getElementById('note').innerHTML = '';
                 hlpt.innerHTML = '';
                 prnc.style.visibility = 'hidden';
                 trns.style.visibility = 'hidden';
                 hlpb.style.visibility = 'hidden';
+                {% if user %}
+                document.getElementById('stats').style.visibility = 'hidden';
+                {% endif %}
             }
         }
     };
 
     hlpb.onclick = function() {
-        hlpt.innerHTML = pronounciation +' : '+ translation;
+        hlpt.innerHTML = pronunciation +' : '+ translation;
+
+        if(pronunciation != '' && translation != '') {prnc.focus();}
+        else if(pronunciation != '')                 {prnc.focus();}
+        else                                         {trns.focus();}
+
+        {% if user %}
+        stat_update(0, vocab_id);
+        {% endif %}
     };
     
     prnc.oninput = function() {
-        if (prnc.value == pronounciation && trns.value == translation) {
+        if (prnc.value == pronunciation && trns.value == translation) {
+            {% if user %}
+            stat_update(1, vocab_id);
+            {% endif %}
             prnc.value = '';
             trns.value = '';
             hlpt.innerHTML = '';
@@ -102,21 +136,76 @@ window.onload=function()
     };
     
     trns.oninput = function() {
-        if (prnc.value == pronounciation && trns.value == translation) {
+        if (prnc.value == pronunciation && trns.value == translation) {
+            {% if user %}
+            stat_update(1, vocab_id);
+            {% endif %}
             prnc.value = '';
             trns.value = '';
             hlpt.innerHTML = '';
             get_vocabulary(getSelectedOptions('groups'));
         }
     };
+
+    document.getElementById('logreg').onclick = function() {
+        document.getElementById('modal-background').style.display = 'block';
+        document.getElementById('modal').style.display = 'block';
+        return false;
+    };
+
+    document.getElementsByClassName("close")[0].onclick = function() {
+        document.getElementById('modal-background').style.display = 'none';
+        document.getElementById('modal').style.display = 'none';
+    };
+}
+
+window.onclick = function(event) {
+    if(event.target == document.getElementById('modal-background')) {
+        document.getElementById('modal-background').style.display = 'none';
+        document.getElementById('modal').style.display = 'none';
+    }
 }
 </script>
+
+<div id="modal-background">
+    <div id="modal">
+        <div id="modal-content">
+
+            <span class="close">&times;</span>
+
+            <div id="modal-login">
+                <h4>Login:</h4>
+                <form action="login" method="post">
+                    {% csrf_token %}
+                    <input id="login-username" name="login-username" type="text" placeholder="Username">
+                    <br>
+                    <input id="login-password" name="login-password" type="password" placeholder="Password">
+                    <br>
+                    <input id="login-submit" type="submit" value="Login">
+                </form>
+            </div>
+
+            <div id="modal-register">
+                <h4>Register:</h4>
+                <form action="register" method="post">
+                    {% csrf_token %}
+                    <input id="register-username" name="register-username" type="text" placeholder="Username">
+                    <br>
+                    <input id="register-password" name="register-password" type="password" placeholder="Password">
+                    <br>
+                    <input id="register-submit" type="submit" value="Register">
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
 
 <div id="wrapper">
 
     <div id="group-container">
         <b><label id="grouplabel">Groups:</label></b>
-        </br>
+        <br>
         <select id="groups" multiple>
             {% for group in groups %}
                 <option value="{{group.group}}">{{group.group}}</option>
@@ -125,6 +214,15 @@ window.onload=function()
     </div>
 
     <div id="inner-container-right">
+        <div id="userinfo">
+            {% if user %}
+            <span>User: {{ user.username }}</span>
+            <a id="logout" href="logout">Logout</a>
+            {% else %}
+            <span>User: Guest</span>
+            <a id="logreg" href="">Login/Register</a>
+            {% endif %}
+        </div>
     
         <div id="response-container">
             <span id="response"></span>
@@ -133,12 +231,20 @@ window.onload=function()
         </div>
 
         <div id="input-container">
-            <input type="text" id="pronounciation" name="pronounciation" placeholder="Pronounciation"/>
-            </br>
+            <input type="text" id="pronunciation" name="pronunciation" placeholder="Pronunciation"/>
+            <br>
             <input type="text" id="translation" name="translation" placeholder="Translation"/>
-            </br>
-            </br>
+            <br>
+            <br>
             <input type="button" name="help" value="help" id="helpbutton">
+            {% if user %}
+            <br>
+            <br>
+            <div id="stats">
+                <span>Streak: </span>
+                <span id="streak"></span>
+            </div>
+            {% endif %}
         </div>
         
     </div>
