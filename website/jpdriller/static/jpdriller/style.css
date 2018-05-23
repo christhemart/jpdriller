@@ -74,7 +74,7 @@ option:hover {
     background-color: rgba(0,0,0,0.4);
 }
 
-#modal {
+.modal {
     display: none;
     position: fixed;
     z-index: 1;
@@ -85,7 +85,7 @@ option:hover {
     margin: 0 auto;
 }
 
-#modal-content {
+.modal-content {
     background-color: #fefefe;
     margin: 15% auto;
     padding: 20px;
@@ -146,4 +146,31 @@ a:active {
 
 #stats {
     text-align: center;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+    margin-bottom: 10px;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1;
+    text-align: left;
+    font-size: 14;
+    font-family: Arial;
+    width: 400px;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
 }

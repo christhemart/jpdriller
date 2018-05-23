@@ -147,16 +147,31 @@ window.onload=function()
         }
     };
 
+    {% if not user %}
     document.getElementById('logreg').onclick = function() {
         document.getElementById('modal-background').style.display = 'block';
         document.getElementById('modal').style.display = 'block';
         return false;
     };
+    {% endif %}
 
-    document.getElementsByClassName("close")[0].onclick = function() {
+    document.getElementById("modal-content-close").onclick = function() {
         document.getElementById('modal-background').style.display = 'none';
         document.getElementById('modal').style.display = 'none';
     };
+
+    {% if user %}
+    document.getElementById('button-settings').onclick = function() {
+        document.getElementById('modal-background').style.display = 'block';
+        document.getElementById('modal-settings').style.display = 'block';
+        return false;
+    };
+
+    document.getElementById("modal-settings-close").onclick = function() {
+        document.getElementById('modal-background').style.display = 'none';
+        document.getElementById('modal-settings').style.display = 'none';
+    };
+    {% endif %}
 }
 
 window.onclick = function(event) {
@@ -168,10 +183,10 @@ window.onclick = function(event) {
 </script>
 
 <div id="modal-background">
-    <div id="modal">
-        <div id="modal-content">
+    <div id="modal" class="modal">
+        <div id="modal-content" class="modal-content">
 
-            <span class="close">&times;</span>
+            <span id="modal-content-close" class="close">&times;</span>
 
             <div id="modal-login">
                 <h4>Login:</h4>
@@ -199,12 +214,49 @@ window.onclick = function(event) {
 
         </div>
     </div>
+
+    {% if user %}
+    <div id="modal-settings" class="modal">
+        <div id="modal-settings-content" class="modal-content">
+            <span id="modal-settings-close" class="close">&times;</span>
+            <form action="save_settings" method="post">
+                {% csrf_token %}
+                <div class="tooltip">Drill Against:
+                    <span class="tooltiptext">Determines chance of drilling Japanese to English or English to Japanese.
+                        <br>Slide all the way left for 100% Japanese to English.
+                        <br>Slide all the way right for 100% English to Japanese.
+                        <br>Or slide half way for 50/50 chance.</span>
+                </div>
+                <br>
+                <span>Japanese</span><input name="weight" type="range" min="0" max="10" value="{{settings.weight}}"><span>English</span>
+                <br>
+                <br>
+                <div class="tooltip">Streak Cutoff:
+                    <span class="tooltiptext">Determines at what streak number to stop drilling vocabulary.
+                        <br>Allows less memorized vocabulary to appear more often.
+                        <br>Vocabulary over the cutoff still have a small chance to appear.
+                        <br>If all vocabulary within the selected group are over the cutoff then vocabulary will be chosen at random.
+                        <br>Recommeneded streak cutoff is 10, a streak of 5-10 usually means full memorization.</span>
+                </div>
+                <br>
+                <input name="cutoff" type="number" min="0" max="1000" value="{{settings.cutoff}}">
+                <br>
+                <br>
+                <input id="settings-save-submit" type="submit" value="Save">
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 
 <div id="wrapper">
 
     <div id="group-container">
         <b><label id="grouplabel">Groups:</label></b>
+        {% if user %}
+        <input id="button-settings" type="button" value="settings" style="float: right; padding: 6px;">
+        {% endif %}
         <br>
         <select id="groups" multiple>
             {% for group in groups %}
@@ -216,7 +268,7 @@ window.onclick = function(event) {
     <div id="inner-container-right">
         <div id="userinfo">
             {% if user %}
-            <span>User: {{ user.username }}</span>
+            <span>User: </span><a href="">{{ user.username }}</a>
             <a id="logout" href="logout">Logout</a>
             {% else %}
             <span>User: Guest</span>

@@ -22,4 +22,13 @@ class UserVocabStats(models.Model):
     streak = models.IntegerField('Streak')
 
     def __str__(self):
-        return str(self.streak)
+        return str(self.vocabulary)
+
+
+class UserSettings(models.Model):
+    user = models.OneToOneField(User, primary_key=True, on_delete=models.CASCADE)
+    weight = models.IntegerField('Against')
+    cutoff = models.IntegerField('Cutoff')
+
+    def __str__(self):
+        return str(self.user)

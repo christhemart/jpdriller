@@ -13,7 +13,8 @@ from .models import *
 def index(request):
     groups = list(Vocabulary.objects.values('group').distinct())
     if request.user.is_authenticated:
-        context = {'groups': groups, 'user': request.user}
+        settings = UserSettings.objects.get(user__exact=request.user)
+        context = {'groups': groups, 'user': request.user, 'settings': settings}
     else:
         context = {'groups': groups, 'user': None}
     return render(request, 'jpdriller/index.html', context)
@@ -38,6 +39,13 @@ def register_view(request):
     password = request.POST.get('register-password', None)
     user = User.objects.create_user(username=username, password=password)
     user.save()
+
+    settings = UserSettings()
+    settings.user = user
+    settings.weight = 5
+    settings.cutoff = 10
+    settings.save()
+
     login(request, user)
     return redirect('')
 
@@ -45,6 +53,15 @@ def register_view(request):
 def get_vocabulary(request):
     groups = request.GET['groups'].split(',')
     vocab = Vocabulary.objects.filter(group__in=groups)
+
+    if request.user.is_authenticated and random.randint(1, 10) < 10:
+        settings = UserSettings.objects.get(user__exact=request.user)
+        if settings.cutoff > 0:
+            stats = UserVocabStats.objects.filter(user__exact=request.user, vocabulary__in=vocab)
+            try:
+                vocab = vocab.exclude(id__in=stats.filter(streak__gt=settings.cutoff).values_list('vocabulary'))
+            except vocab.DoesNotExist:
+                pass
 
     vocab = vocab[random.randint(0, len(vocab) - 1)]
 
@@ -63,7 +80,11 @@ def get_vocabulary(request):
         stat = None
 
     if str(vocab.group) not in ['Hiragana', 'Katakana']:
-        response = str(random.randint(0, 1))
+        if request.user.is_authenticated:
+            settings = UserSettings.objects.get(user__exact=request.user)
+            response = '1' if random.randint(1, 10) <= settings.weight else '0'
+        else:
+            response = str(random.randint(0, 1))
     else:
         response = '0'
 
@@ -94,3 +115,15 @@ def stat_update(request):
     stat.save()
 
     return HttpResponse('')
+
+
+def save_settings(request):
+    weight = request.POST.get('weight', None)
+    cutoff = request.POST.get('cutoff', None)
+
+    settings = UserSettings.objects.get(user__exact=request.user)
+    settings.weight = weight
+    settings.cutoff = cutoff
+    settings.save()
+
+    return redirect('')
