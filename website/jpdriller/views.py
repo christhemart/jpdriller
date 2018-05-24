@@ -30,7 +30,8 @@ def login_view(request):
 
 
 def logout_view(request):
-    logout(request)
+    if request.user.is_authenticated:
+        logout(request)
     return redirect('')
 
 
@@ -51,19 +52,29 @@ def register_view(request):
 
 
 def get_vocabulary(request):
-    groups = request.GET['groups'].split(',')
-    vocab = Vocabulary.objects.filter(group__in=groups)
+    groups = request.GET['groups']
 
-    if request.user.is_authenticated and random.randint(1, 10) < 10:
-        settings = UserSettings.objects.get(user__exact=request.user)
-        if settings.cutoff > 0:
-            stats = UserVocabStats.objects.filter(user__exact=request.user, vocabulary__in=vocab)
-            try:
-                vocab = vocab.exclude(id__in=stats.filter(streak__gt=settings.cutoff).values_list('vocabulary'))
-            except vocab.DoesNotExist:
-                pass
+    if groups == 'GETLAST':
+        vocab = UserSettings.objects.get(user__exact=request.user).last_vocab
+    else:
+        groups = groups.split(',')
+        vocab = Vocabulary.objects.filter(group__in=groups)
 
-    vocab = vocab[random.randint(0, len(vocab) - 1)]
+        if request.user.is_authenticated and random.randint(1, 10) < 10:
+            settings = UserSettings.objects.get(user__exact=request.user)
+            if settings.cutoff > 0:
+                stats = UserVocabStats.objects.filter(user__exact=request.user, vocabulary__in=vocab)
+                try:
+                    vocab = vocab.exclude(id__in=stats.filter(streak__gt=settings.cutoff).values_list('vocabulary'))
+                except vocab.DoesNotExist:
+                    pass
+
+        vocab = vocab[random.randint(0, len(vocab) - 1)]
+
+        if request.user.is_authenticated:
+            settings = UserSettings.objects.get(user__exact=request.user)
+            settings.last_vocab = vocab
+            settings.save()
 
     if request.user.is_authenticated:
         try:
@@ -100,30 +111,41 @@ def get_vocabulary(request):
 
 
 def stat_update(request):
-    success = request.GET['success']
-    vocab_id = request.GET['vocabid']
-    vocab = Vocabulary.objects.get(id__exact=vocab_id)
+    if request.user.is_authenticated:
+        success = request.GET['success']
+        vocab_id = request.GET['vocabid']
+        vocab = Vocabulary.objects.get(id__exact=vocab_id)
 
-    stat = UserVocabStats.objects.get(user__exact=request.user, vocabulary__exact=vocab)
+        stat = UserVocabStats.objects.get(user__exact=request.user, vocabulary__exact=vocab)
 
-    if int(success):
-        stat.count += 1
-        stat.streak += 1
-    else:
-        stat.streak = 0
+        if int(success):
+            stat.count += 1
+            stat.streak += 1
+        else:
+            stat.streak = 0
 
-    stat.save()
+        stat.save()
 
     return HttpResponse('')
 
 
 def save_settings(request):
-    weight = request.POST.get('weight', None)
-    cutoff = request.POST.get('cutoff', None)
+    if request.user.is_authenticated:
+        weight = request.POST.get('weight', None)
+        cutoff = request.POST.get('cutoff', None)
 
-    settings = UserSettings.objects.get(user__exact=request.user)
-    settings.weight = weight
-    settings.cutoff = cutoff
-    settings.save()
+        settings = UserSettings.objects.get(user__exact=request.user)
+        settings.weight = weight
+        settings.cutoff = cutoff
+        settings.save()
 
     return redirect('')
+
+
+def save_groups(request):
+    if request.user.is_authenticated:
+        settings = UserSettings.objects.get(user__exact=request.user)
+        settings.selection = request.GET['groups']
+        settings.save()
+
+    return HttpResponse('')

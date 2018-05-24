@@ -9,7 +9,14 @@ var pronunciation;
 var group;
 
 function getSelectedOptions(id) {
-    return Array.from(document.querySelectorAll('#'+id+' option:checked')).map((el) => el.value);
+    var str = '';
+    for(var i = 0; i < document.querySelectorAll('#'+id+' option:checked').length; i++) {
+        str += document.querySelectorAll('#'+id+' option:checked')[i].value;
+        if(i+1 < document.querySelectorAll('#'+id+' option:checked').length) {
+            str += ',';
+        }
+    }
+     return str;
 }
     
 function get_vocabulary(str) {
@@ -63,7 +70,6 @@ function get_vocabulary(str) {
             else if(pronunciation != "") {prnc.focus();}
             else {trns.focus();}
         }
-        else {alert('Request failed ' + xhr.status);}
     };
     xhr.send();
 }
@@ -75,7 +81,31 @@ function stat_update(success, vocab_id) {
     xhr.send();
 }
 {% endif %}
-    
+
+{% if user %}
+function save_groups(groups) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET','save_groups?groups='+groups);
+    xhr.send();
+}
+{% endif %}
+
+{% if user %}
+function setSelectedIndex(s, arr) {
+    var arr_i = 0;
+    for(i = 0; i< s.options.length; i++) {
+        if(s.options[i].value == arr[arr_i]) {
+            s.options[i].selected = true;
+            arr_i += 1;
+            if(arr_i == arr.length) {
+                break;
+            }
+        }
+    }
+    return;
+}
+{% endif %}
+
 window.onload=function()
 {
     var prnc = document.getElementById('pronunciation');
@@ -90,10 +120,48 @@ window.onload=function()
     var stat = document.getElementById('stats').style.visibility = 'hidden';
     {% endif %}
 
+    var helpflag = false;
+
+    function help() {
+        if(helpflag == false) {
+            helpflag = true;
+            hlpt.innerHTML = pronunciation +' : '+ translation;
+
+            if(pronunciation != '' && translation != '') {
+                prnc.value = '';
+                trns.value = '';
+                prnc.focus();
+            }
+            else if(pronunciation != '') {
+                prnc.value = '';
+                prnc.focus();
+            }
+            else {
+                trns.value = '';
+                trns.focus();
+            }
+
+            {% if user %}
+            stat_update(0, vocab_id);
+            {% endif %}
+        }
+    }
+
+    {% if user %}
+        {% if settings.selection %}
+    setSelectedIndex(document.getElementById('groups'), '{{settings.selection}}'.split(','));
+    get_vocabulary('GETLAST');
+        {% endif %}
+    {% endif %}
+
     document.getElementById('groups').onchange = function() {
         var groups = getSelectedOptions('groups');
-        
-        if(document.getElementById('response').innerHTML == ''  || !groups.includes(group)) {
+
+        {% if user %}
+        save_groups(groups);
+        {% endif %}
+
+        if(document.getElementById('response').innerHTML == ''  || groups.indexOf(group) == -1) {
             if(groups != "") {get_vocabulary(groups);}
             else {
                 translation = '';
@@ -111,17 +179,13 @@ window.onload=function()
         }
     };
 
-    hlpb.onclick = function() {
-        hlpt.innerHTML = pronunciation +' : '+ translation;
+    hlpb.addEventListener('click', help);
 
-        if(pronunciation != '' && translation != '') {prnc.focus();}
-        else if(pronunciation != '')                 {prnc.focus();}
-        else                                         {trns.focus();}
-
-        {% if user %}
-        stat_update(0, vocab_id);
-        {% endif %}
-    };
+    window.addEventListener('keydown', function(event) {
+        if (event.keyCode == 17) {
+            help();
+        }
+    }, false);
     
     prnc.oninput = function() {
         if (prnc.value == pronunciation && trns.value == translation) {
@@ -131,6 +195,7 @@ window.onload=function()
             prnc.value = '';
             trns.value = '';
             hlpt.innerHTML = '';
+            helpflag = false;
             get_vocabulary(getSelectedOptions('groups'));
         }
     };
@@ -143,6 +208,7 @@ window.onload=function()
             prnc.value = '';
             trns.value = '';
             hlpt.innerHTML = '';
+            helpflag = false;
             get_vocabulary(getSelectedOptions('groups'));
         }
     };
@@ -167,7 +233,7 @@ window.onload=function()
         return false;
     };
 
-    document.getElementById("modal-settings-close").onclick = function() {
+    document.getElementById('modal-settings-close').onclick = function() {
         document.getElementById('modal-background').style.display = 'none';
         document.getElementById('modal-settings').style.display = 'none';
     };

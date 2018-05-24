@@ -29,6 +29,8 @@ class UserSettings(models.Model):
     user = models.OneToOneField(User, primary_key=True, on_delete=models.CASCADE)
     weight = models.IntegerField('Against')
     cutoff = models.IntegerField('Cutoff')
+    selection = models.CharField('Selection', max_length=1000, null=True)
+    last_vocab = models.ForeignKey(Vocabulary, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return str(self.user)

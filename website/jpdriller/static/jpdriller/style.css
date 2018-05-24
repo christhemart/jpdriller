@@ -45,8 +45,8 @@
     cursor: pointer;
 }
 
-option:hover {
-  background-color: DodgerBlue;
+option:hover, option:checked {
+  background: -webkit-linear-gradient(left, DodgerBlue 0%, #EFEFEF 100%);
 }
 
 #response {
@@ -100,18 +100,13 @@ option:hover {
     font-weight: bold;
 }
 
-.close:hover,
-.close:focus {
+.close:hover, .close:focus {
     color: black;
     text-decoration: none;
     cursor: pointer;
 }
 
-#modal-login {
-    font-family: Arial;
-}
-
-#modal-register {
+#modal-login, #modal-register {
     font-family: Arial;
 }
 
