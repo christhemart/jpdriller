@@ -1,4 +1,6 @@
 # jpdriller
+![Screenshot](example.png)
+
 Django app for drilling and memorizing Japanese through vocabulary.
 
 To start, just run the batch file which runs the django server and opens a browser to localhost.
