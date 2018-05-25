@@ -38,17 +38,29 @@ def logout_view(request):
 def register_view(request):
     username = request.POST.get('register-username', None)
     password = request.POST.get('register-password', None)
-    user = User.objects.create_user(username=username, password=password)
-    user.save()
 
-    settings = UserSettings()
-    settings.user = user
-    settings.weight = 5
-    settings.cutoff = 10
-    settings.save()
+    if len(password) > 8:
+        user = User.objects.create_user(username=username, password=password)
+        user.save()
 
-    login(request, user)
+        settings = UserSettings()
+        settings.user = user
+        settings.weight = 5
+        settings.cutoff = 10
+        settings.save()
+
+        login(request, user)
+
     return redirect('')
+
+
+def check_username(request):
+    try:
+        User.objects.get(username__exact=request.GET['username'])
+        response = 1
+    except User.DoesNotExist:
+        response = 0
+    return HttpResponse(response)
 
 
 def get_vocabulary(request):

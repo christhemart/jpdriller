@@ -162,6 +162,7 @@ window.onload=function()
         {% endif %}
 
         if(document.getElementById('response').innerHTML == ''  || groups.indexOf(group) == -1) {
+            helpflag = false;
             if(groups != "") {get_vocabulary(groups);}
             else {
                 translation = '';
@@ -181,9 +182,11 @@ window.onload=function()
 
     hlpb.addEventListener('click', help);
 
-    window.addEventListener('keydown', function(event) {
-        if (event.keyCode == 17) {
-            help();
+    window.addEventListener('keyup', function(event) {
+        if(event.keyCode == 191) {
+            if(hlpb.style.visibility == 'visible') {
+                help();
+            }
         }
     }, false);
     
@@ -214,10 +217,69 @@ window.onload=function()
     };
 
     {% if not user %}
+    var userflag = false;
+    var passflag = false;
+    document.getElementById('register-submit').disabled = true;
+
     document.getElementById('logreg').onclick = function() {
         document.getElementById('modal-background').style.display = 'block';
         document.getElementById('modal').style.display = 'block';
         return false;
+    };
+
+    document.getElementById('register-username').oninput = function() {
+        var username = document.getElementById('register-username').value;
+        if(username == '') {
+            userflag = false;
+            document.getElementById('username-check').innerHTML = '';
+            document.getElementById('register-submit').disabled = true;
+        } else {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET','check_username?username='+username);
+            xhr.onload = function() {
+                if(xhr.readyState === 4 && xhr.status === 200) {
+                    if(parseInt(xhr.responseText) == 0) {
+                        userflag = true;
+                        document.getElementById('username-check').style.color = 'green';
+                        document.getElementById('username-check').innerHTML = ' Great!';
+                    } else {
+                        userflag = false;
+                        document.getElementById('username-check').style.color = 'red';
+                        document.getElementById('username-check').innerHTML = ' Already Taken';
+                    }
+                }
+            };
+            xhr.send();
+        }
+
+        if(userflag == true && passflag == true) {
+            document.getElementById('register-submit').disabled = false;
+        } else {
+            document.getElementById('register-submit').disabled = true;
+        }
+    };
+
+    document.getElementById('register-password').oninput = function() {
+        if(document.getElementById('register-password').value == '') {
+            passflag = false;
+            document.getElementById('password-check').innerHTML = '';
+        } else {
+            if(document.getElementById('register-password').value.length < 8) {
+                passflag = false;
+                document.getElementById('password-check').style.color = 'red';
+                document.getElementById('password-check').innerHTML = ' Too Short (8 character min).';
+            } else {
+                passflag = true;
+                document.getElementById('password-check').style.color = 'green';
+                document.getElementById('password-check').innerHTML = ' Great!';
+            }
+        }
+
+        if(userflag && passflag) {
+            document.getElementById('register-submit').disabled = false;
+        } else {
+            document.getElementById('register-submit').disabled = true;
+        }
     };
     {% endif %}
 
@@ -271,8 +333,10 @@ window.onclick = function(event) {
                 <form action="register" method="post">
                     {% csrf_token %}
                     <input id="register-username" name="register-username" type="text" placeholder="Username">
+                    <span id="username-check"></span>
                     <br>
                     <input id="register-password" name="register-password" type="password" placeholder="Password">
+                    <span id="password-check"></span>
                     <br>
                     <input id="register-submit" type="submit" value="Register">
                 </form>
