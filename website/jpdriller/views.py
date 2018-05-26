@@ -2,6 +2,7 @@ import random
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.db import IntegrityError
 from django.db.models import Max
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -39,19 +40,24 @@ def register_view(request):
     username = request.POST.get('register-username', None)
     password = request.POST.get('register-password', None)
 
-    if len(password) > 8:
-        user = User.objects.create_user(username=username, password=password)
-        user.save()
+    if len(password) >= 8 and len(username) >= 4:
+        try:
+            user = User.objects.create_user(username=username, password=password)
 
-        settings = UserSettings()
-        settings.user = user
-        settings.weight = 5
-        settings.cutoff = 10
-        settings.save()
+            if user:
+                user.save()
 
-        login(request, user)
+                settings = UserSettings()
+                settings.user = user
+                settings.weight = 5
+                settings.cutoff = 10
+                settings.save()
 
-    return redirect('')
+                login(request, user)
+                return redirect('')
+        except IntegrityError:
+            pass
+    return redirect('naughty')
 
 
 def check_username(request):
@@ -77,7 +83,9 @@ def get_vocabulary(request):
             if settings.cutoff > 0:
                 stats = UserVocabStats.objects.filter(user__exact=request.user, vocabulary__in=vocab)
                 try:
-                    vocab = vocab.exclude(id__in=stats.filter(streak__gt=settings.cutoff).values_list('vocabulary'))
+                    temp = vocab.exclude(id__in=stats.filter(streak__gt=settings.cutoff).values_list('vocabulary'))
+                    if len(temp) > 0:
+                        vocab = temp
                 except vocab.DoesNotExist:
                     pass
 
@@ -161,3 +169,10 @@ def save_groups(request):
         settings.save()
 
     return HttpResponse('')
+
+
+def naughty(request):
+    response = '<body style="background-color: black; display: flex; justify-content: center; align-items: center;">'
+    response += '<br><b><span style="font-size: 72px; color: red;">ヾ( ･`⌓´･)ﾉﾞ</span></b>'
+    response += '</body>'
+    return HttpResponse(response)

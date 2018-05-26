@@ -106,6 +106,18 @@ function setSelectedIndex(s, arr) {
 }
 {% endif %}
 
+function resize_margins() {
+    var wrapper = document.getElementById('wrapper');
+    var height = window.innerHeight;
+    if(height <= 470) {
+        wrapper.style.marginTop = Math.round(height * .01) + 'px';
+    } else {
+        wrapper.style.marginTop = Math.round(height * .05) + 'px';
+    }
+    document.getElementById('extras').style.marginTop = parseInt(wrapper.style.marginTop, 10) + parseInt(window.getComputedStyle(wrapper).height) + 10 + 'px';
+    return;
+}
+
 window.onload=function()
 {
     var prnc = document.getElementById('pronunciation');
@@ -122,10 +134,18 @@ window.onload=function()
 
     var helpflag = false;
 
+    resize_margins();
+    window.addEventListener('resize', resize_margins);
+
     function help() {
         if(helpflag == false) {
             helpflag = true;
-            hlpt.innerHTML = pronunciation +' : '+ translation;
+
+            if(pronunciation == '' || translation == '') {
+                hlpt.innerHTML = pronunciation + translation;
+            } else {
+                hlpt.innerHTML = pronunciation +' : '+ translation;
+            }
 
             if(pronunciation != '' && translation != '') {
                 prnc.value = '';
@@ -232,7 +252,10 @@ window.onload=function()
         if(username == '') {
             userflag = false;
             document.getElementById('username-check').innerHTML = '';
-            document.getElementById('register-submit').disabled = true;
+        } else if(username.length < 4) {
+            userflag = false;
+            document.getElementById('username-check').style.color = 'red';
+            document.getElementById('username-check').innerHTML = ' Too Short (4 character min).';
         } else {
             var xhr = new XMLHttpRequest();
             xhr.open('GET','check_username?username='+username);
@@ -245,7 +268,7 @@ window.onload=function()
                     } else {
                         userflag = false;
                         document.getElementById('username-check').style.color = 'red';
-                        document.getElementById('username-check').innerHTML = ' Already Taken';
+                        document.getElementById('username-check').innerHTML = ' Already Taken.';
                     }
                 }
             };
@@ -300,6 +323,28 @@ window.onload=function()
         document.getElementById('modal-settings').style.display = 'none';
     };
     {% endif %}
+
+    document.getElementById('extras-about').onclick = function() {
+        document.getElementById('modal-background').style.display = 'block';
+        document.getElementById('modal-about').style.display = 'block';
+        return false;
+    };
+
+    document.getElementById('modal-about-close').onclick = function() {
+        document.getElementById('modal-background').style.display = 'none';
+        document.getElementById('modal-about').style.display = 'none';
+    };
+
+    document.getElementById('extras-tips').onclick = function() {
+        document.getElementById('modal-background').style.display = 'block';
+        document.getElementById('modal-tips').style.display = 'block';
+        return false;
+    };
+
+    document.getElementById('modal-tips-close').onclick = function() {
+        document.getElementById('modal-background').style.display = 'none';
+        document.getElementById('modal-tips').style.display = 'none';
+    };
 }
 
 window.onclick = function(event) {
@@ -332,6 +377,12 @@ window.onclick = function(event) {
                 <h4>Register:</h4>
                 <form action="register" method="post">
                     {% csrf_token %}
+                    <span style="font-size: 14px;">I'm not interested in keeping any information. Not even emails.
+                        <br>If you lose your password, you will never get your login back.
+                        <br>Accounts are automatically deleted after 30 days of inactivity.
+                        <br>I highly suggest not using the same passwords from other sites.</span>
+                    <br>
+                    <br>
                     <input id="register-username" name="register-username" type="text" placeholder="Username">
                     <span id="username-check"></span>
                     <br>
@@ -377,6 +428,45 @@ window.onclick = function(event) {
         </div>
     </div>
     {% endif %}
+
+    <div id="modal-about" class="modal">
+        <div id="modal-about-content" class="modal-content">
+            <span id="modal-about-close" class="close">&times;</span>
+            <span>私の名前は<b>Chris Martinez</b>です
+                <br>In my efforts to study 日本語 and learn Django, I decided to create this site and do both at once.
+                <br>
+                <br>It currently contains all Hiragana, Katakana, and nearly 1,000 Japanese vocabulary, mainly Kanji.
+                The idea is to learn through drilling and memorization of pronunications and translations.
+                It works like flash cards except answers are checked on typing and new questions are shown if
+                the given answer is correct without ever having to press a submit button. This allows very quick
+                drilling. Vocabulary is split into groups so you can focus on a select group or select multiple
+                groups to pool questions from those groups. I hope you find it helpful in studying.
+                <br>
+                <br>Feel free to contact me at <i>EMAIL</i> for any questions.
+                <br>You can also view the project on <a>GitHub</a>.</span>
+        </div>
+    </div>
+
+    <div id="modal-tips" class="modal">
+        <div id="modal-tips-content" class="modal-content">
+            <span id="modal-tips-close" class="close">&times;</span>
+            <ul>
+                <li>Some answers are required to be answered in Hiragana, Katakana or Kanji! You'll need to enable your
+                computer's IME for Japanese. Google if you don't know how to enable or use IME.</li>
+                <li>The '/' key is a shortcut for help, it's a little faster then mousing over and clicking the
+                help button.</li>
+                <li>You'll have a hard time drilling any groups unless have at a minimum memorized 95% of hiragana
+                and most of katakana. That should be your first step.</li>
+                <li>Although registering is not neccessary at all, registering allows you to track how well you have
+                memorized a particular vocabulary. Vocabulary you've memorized fully will apear less often allowing
+                vocabulary you are weak on to appear more often. Registering will also save selected groups so its faster
+                to pick up after returning. Lastly, registering will allow you to change and save settings on how
+                vocabulary is chosen and drilled, specifically if you only want to drill against Japanese, English, or a mix.</li>
+                <li>While its rather easy to cheat and get the answers from the browser to preserve a streak, you are
+                only hurting yourself. :)</li>
+            </ul>
+        </div>
+    </div>
 
 </div>
 
@@ -430,5 +520,10 @@ window.onclick = function(event) {
         </div>
         
     </div>
-    
+
+</div>
+
+<div id="extras">
+    <a id="extras-about" href="" class="extras">about</a>
+    <a id="extras-tips" href="" class="extras">tips</a>
 </div>

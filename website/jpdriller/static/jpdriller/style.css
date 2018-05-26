@@ -1,9 +1,14 @@
+body {
+    display: flex;
+    justify-content: center;
+}
+
 #wrapper {
+    position: absolute;
     border-style: solid;
     border-width: 2px;
     width: 525px;
     height: 400px;
-    margin: 0 auto;
 }
 
 #group-container {
@@ -87,7 +92,7 @@ option:hover, option:checked {
 
 .modal-content {
     background-color: #fefefe;
-    margin: 15% auto;
+    margin: 10% auto;
     padding: 20px;
     border: 1px solid #888;
     width: 80%;
@@ -168,4 +173,9 @@ a:active {
 
 .tooltip:hover .tooltiptext {
     visibility: visible;
+}
+
+.extras {
+    padding-left: 40px;
+    padding-right: 40px;
 }
